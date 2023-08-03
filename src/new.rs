@@ -1,30 +1,15 @@
 use colored::*;
+use dialoguer::Confirm;
+use dialoguer::{theme::ColorfulTheme, Input};
+use regex::Regex;
 use std::fs::OpenOptions;
-use std::io;
 use std::io::Write;
 use toml::map::Map;
 use toml::Value;
 
 struct Config {
-    platform_ssh_key_alias: String,
+    platform_name: String,
     repositories: Vec<Value>,
-}
-
-struct Input {
-    message: String,
-}
-
-impl Input {
-    fn input(&self) -> String {
-        let mut value: String = String::new();
-        print!("{}", self.message.bold());
-        let _ = io::stdout().flush();
-        io::stdin()
-            .read_line(&mut value)
-            .expect("Error reading from STDIN");
-        value.pop();
-        value
-    }
 }
 
 impl Config {
@@ -35,7 +20,7 @@ impl Config {
             String::from("repositories"),
             Value::Array(self.repositories),
         );
-        platform.insert(self.platform_ssh_key_alias, Value::Table(repositories));
+        platform.insert(self.platform_name, Value::Table(repositories));
         platform
     }
 }
@@ -50,70 +35,73 @@ pub fn new(client_name: &String) {
         .open(repositories_config_file)
         .expect("ERROR: Run 'grabber setup' to configure the script");
 
-    let mut add_platform: i32 = 0;
-
-    while add_platform == 0 {
+    loop {
         let mut repositories: Vec<Value> = Vec::new();
-        let mut continue_adding_repositories: i32 = 0;
-
-        let message: String = String::from("Enter platform ssh key alias: ");
-        let platform_ssh_key_alias: String = Input { message }.input();
-    
+        let platform_name: String = Input::with_theme(&ColorfulTheme::default())
+            .with_prompt("Enter platform ssh key alias")
+            .interact_text()
+            .unwrap();
         println!(
             "{}",
             "Use 'quit' to stop adding repositories"
                 .truecolor(255, 171, 0)
                 .bold()
         );
+        loop {
+            let ssh_clone_uri_pattern = Regex::new(r"^(git@)?[a-zA-Z0-9.-]+(:|/).+\.git$").unwrap();
+            let repository_url: String = Input::with_theme(&ColorfulTheme::default())
+                .with_prompt("Enter repository SSH url")
+                .validate_with({
+                    move |input: &String| -> Result<(), &str> {
+                        if input == "quit" || ssh_clone_uri_pattern.is_match(input) {
+                            Ok(())
+                        } else {
+                            Err("Invalid SSH clone URI format.")
+                        }
+                    }
+                })
+                .interact_text()
+                .unwrap();
 
-        while continue_adding_repositories == 0 {
-            let message: String = String::from("Enter ssh repository url: ");
-            let repository_url: String = Input { message }.input();
-
-            match &repository_url.eq("quit") {
-                true => continue_adding_repositories += 1,
-                false => repositories.push(Value::String(repository_url)),
+            if repository_url.eq("quit") {
+                break;
+            } else if repositories
+                .iter()
+                .any(|repo| repo.as_str() == Some(&repository_url))
+            {
+                eprintln!("{}", "✘ Repository already exists".red().bold());
+            } else {
+                repositories.push(Value::String(repository_url));
             }
         }
+
         let config: Config = Config {
-            platform_ssh_key_alias,
+            platform_name,
             repositories,
         };
         let platform = config.add_platform();
 
         let mut client: Map<String, Value> = Map::new();
-        client.insert(
-            client_name.clone().to_ascii_lowercase(),
-            Value::Table(platform),
-        );
+        client.insert(client_name.to_ascii_lowercase(), Value::Table(platform));
 
         let toml_content = toml::to_string(&client).expect("ERROR: Parse TOML error");
 
         file.write_all(toml_content.as_bytes())
             .expect("ERROR: Unable to write TOML file");
 
-        let mut continue_adding_platform: String = String::new();
-        print!(
-            "{}",
-            "Do you want to to add another Platform [y/N]? "
-                .truecolor(255, 171, 0)
-                .bold()
-        );
-        let _ = io::stdout().flush();
-        io::stdin()
-            .read_line(&mut continue_adding_platform)
-            .expect("Error reading from STDIN");
-        // remove carriage return
-        continue_adding_platform.pop();
-
-        match &continue_adding_platform.eq("y") {
-            true => (),
-            false => add_platform += 1,
+        if !Confirm::with_theme(&ColorfulTheme::default())
+            // .default(false)
+            .with_prompt("Do you want to continue?")
+            .interact()
+            .expect("msg")
+        {
+            break;
         }
     }
+
     println!(
         "{}: {}",
-        "The following client has been added".green().bold(),
+        "New respository platforms have been configured for".green().bold(),
         client_name
     );
 }
