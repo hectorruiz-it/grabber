@@ -80,7 +80,6 @@ fn check_current_config(force: bool, config_files: &[String; 2]) -> Result<(), S
             }
         }
     }
-
     Ok(())
 }
 
