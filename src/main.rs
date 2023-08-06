@@ -158,7 +158,13 @@ fn main() {
             }
         }
         Commands::Setup { force } => {
-            setup::setup(*force);
+            match setup::setup(*force) {
+                Ok(_) => exit(0),
+                Err(err) => {
+                    eprintln!("ERROR: {}", err);
+                    exit(1)
+                }
+            }
         }
     }
 }
