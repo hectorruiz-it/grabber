@@ -1,7 +1,7 @@
 use std::process::exit;
 
-use clap::ArgGroup;
-use clap::{Parser, Subcommand};
+// use clap::ArgGroup;
+use clap::{ArgGroup, Parser, Subcommand};
 mod add;
 mod list;
 mod new;
@@ -40,7 +40,7 @@ enum Commands {
 
         #[clap(group = "simple", long)]
         /// List all platform ssh key alias
-        ssh: bool,
+        platforms: bool,
 
         #[clap(group = "simple", long)]
         /// List all clients
@@ -48,12 +48,20 @@ enum Commands {
     },
     /// Adds a new Client
     New {
-        #[clap(short, long)]
+        #[clap(long)]
         /// Name of the client to add
-        client: String,
+        client: bool,
+
+        #[clap(long)]
+        /// Name of the platform to add
+        platform: bool,
     },
     /// Configure script files and directory. You must run this first.
-    Setup,
+    Setup {
+        #[clap(short, long)]
+        /// Delete current configuration and start setup
+        force: bool,
+    },
 }
 
 fn main() {
@@ -82,7 +90,7 @@ fn main() {
         Commands::List {
             client,
             platform,
-            ssh,
+            platforms,
             clients,
         } => {
             if client.is_some() && platform.is_some() {
@@ -115,7 +123,7 @@ fn main() {
                     }
                 };
             };
-            if ssh.to_string() == "true" {
+            if *platforms {
                 match list::platforms() {
                     Ok(_) => exit(0),
                     Err(err) => {
@@ -124,7 +132,7 @@ fn main() {
                     }
                 };
             }
-            if clients.to_string() == "true" {
+            if *clients {
                 match list::clients() {
                     Ok(_) => exit(0),
                     Err(err) => {
@@ -134,10 +142,23 @@ fn main() {
                 }
             }
         }
-        Commands::New { client } => {
-            println!("New client {:?} will be configured", client);
-            new::new(client)
+        Commands::New { client, platform } => {
+            if *client && !*platform {
+                new::client();
+            } else if !*client && *platform {
+                match new::platform() {
+                    Ok(_) => exit(0),
+                    Err(err) => {
+                        eprintln!("{}", err);
+                        exit(1)
+                    }
+                }
+            } else {
+                eprintln!("ERROR: flags --client and --platform can't be used together")
+            }
         }
-        Commands::Setup => setup::setup(),
+        Commands::Setup { force } => {
+            setup::setup(*force);
+        }
     }
 }
