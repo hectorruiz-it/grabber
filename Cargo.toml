@@ -9,9 +9,10 @@ edition = "2021"
 clap = { version = "4.3.19", features = ["cargo", "derive", "color"] }
 colored = "2.0.4"
 comfy-table = "6.1.2"
-dirs = "4.0.0"
+dirs = "5.0.1"
 toml_edit = "0.19.14"
 toml = "0.7.6"
 serde = { version = "1.0.178", features = ["derive"] }
 dialoguer = "0.10.4"
 regex = "1.9.1"
+keyring = "2.0.5"
