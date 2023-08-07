@@ -4,17 +4,17 @@ use comfy_table::ContentArrangement;
 use comfy_table::{Cell, Row};
 use std::fs::File;
 use std::io::{Error, Read};
+use std::path::PathBuf;
 use std::process::exit;
 use toml::value::Table;
 use toml::Value;
 
 pub fn platforms() -> Result<(), Error> {
-    let ssh_config_file_path: String = format!(
-        "{}/.grabber/grabber-config.toml",
-        dirs::home_dir().unwrap().display()
-    );
+    let home: PathBuf = dirs::home_dir().expect("Home directory not found");
+    let config_path: PathBuf = [".grabber", "grabber-config.toml"].iter().collect();
+    let config_file: PathBuf = home.join(config_path);
 
-    let mut file = File::open(ssh_config_file_path).unwrap();
+    let mut file = File::open(config_file).unwrap();
     let mut contents = String::new();
 
     file.read_to_string(&mut contents).unwrap();
@@ -35,11 +35,11 @@ pub fn platforms() -> Result<(), Error> {
 }
 
 pub fn clients() -> Result<(), Error> {
-    let ssh_config_file_path: String = format!(
-        "{}/.grabber/grabber-repositories.toml",
-        dirs::home_dir().unwrap().display()
-    );
-    let mut file = File::open(ssh_config_file_path).unwrap();
+    let home: PathBuf = dirs::home_dir().expect("Home directory not found");
+    let repositories_config_path: PathBuf = [".grabber", "grabber-repositories.toml"].iter().collect();
+    let repositories_config_file: PathBuf = home.join(repositories_config_path);
+
+    let mut file = File::open(repositories_config_file).unwrap();
     let mut contents = String::new();
 
     file.read_to_string(&mut contents).unwrap();
@@ -51,7 +51,7 @@ pub fn clients() -> Result<(), Error> {
         .set_content_arrangement(ContentArrangement::Dynamic);
 
     let toml: Table = toml::from_str(&contents).unwrap();
-    //let keys = toml.into.collect::<Value>;
+
     let clients = toml.keys();
     for key in clients {
         let mut row: Row = Row::new();
@@ -63,11 +63,11 @@ pub fn clients() -> Result<(), Error> {
 }
 
 pub fn client_platform(client: &String) -> Result<(), Error> {
-    let ssh_config_file_path: String = format!(
-        "{}/.grabber/grabber-repositories.toml",
-        dirs::home_dir().unwrap().display()
-    );
-    let mut file = File::open(ssh_config_file_path).unwrap();
+    let home: PathBuf = dirs::home_dir().expect("Home directory not found");
+    let repositories_config_path: PathBuf = [".grabber", "grabber-repositories.toml"].iter().collect();
+    let repositories_config_file: PathBuf = home.join(repositories_config_path);
+
+    let mut file = File::open(repositories_config_file).unwrap();
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
     let toml: Value = toml::from_str(&contents).unwrap();
@@ -101,12 +101,11 @@ pub fn client_platform(client: &String) -> Result<(), Error> {
 }
 
 pub fn platform_key_alias_config(platform_key_alias: &String) -> Result<(), Error> {
-    let ssh_config_file_path: String = format!(
-        "{}/.grabber/grabber-config.toml",
-        dirs::home_dir().unwrap().display()
-    );
+    let home: PathBuf = dirs::home_dir().expect("Home directory not found");
+    let config_path: PathBuf = [".grabber", "grabber-config.toml"].iter().collect();
+    let config_file: PathBuf = home.join(config_path);
 
-    let mut file = File::open(ssh_config_file_path).unwrap();
+    let mut file = File::open(config_file).unwrap();
     let mut contents = String::new();
 
     file.read_to_string(&mut contents).unwrap();
@@ -131,12 +130,11 @@ pub fn platform_key_alias_config(platform_key_alias: &String) -> Result<(), Erro
 }
 
 pub fn client_platform_repositories(client: &String, platform: &String) -> Result<(), Error> {
-    let ssh_config_file_path: String = format!(
-        "{}/.grabber/grabber-repositories.toml",
-        dirs::home_dir().unwrap().display()
-    );
+    let home: PathBuf = dirs::home_dir().expect("Home directory not found");
+    let repositories_config_path: PathBuf = [".grabber", "grabber-repositories.toml"].iter().collect();
+    let repositories_config_file: PathBuf = home.join(repositories_config_path);
 
-    let mut file = File::open(ssh_config_file_path).expect("ERROR: Unable to open file,");
+    let mut file = File::open(repositories_config_file).expect("ERROR: Unable to open file,");
     let mut contents = String::new();
     file.read_to_string(&mut contents)
         .expect("ERROR: Unable to read file.");
