@@ -1,13 +1,12 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-
-pub fn setup(force: bool) -> Result<(), String>{
+pub fn setup(force: bool) -> Result<(), String> {
     let home: PathBuf = dirs::home_dir().expect("Home directory not found");
-    let config_path: PathBuf = [".grabber", "grabber-repositories.toml"].iter().collect();
+    let config_path: PathBuf = [".grabber", "grabber-config.toml"].iter().collect();
     let repositories_config_path: PathBuf = [".grabber", "grabber-repositories.toml"].iter().collect();
-    let config_file: PathBuf = home.join(config_path);    
-    let repositories_config_file: PathBuf = home.join(repositories_config_path);    
+    let config_file: PathBuf = home.join(config_path);
+    let repositories_config_file: PathBuf = home.join(repositories_config_path);
 
     let config_files: [PathBuf; 2] = [config_file, repositories_config_file];
 
@@ -16,9 +15,7 @@ pub fn setup(force: bool) -> Result<(), String>{
             create_grabber_configuration(&home, config_files);
             Ok(())
         }
-        Err(err) => {
-            Err(err)
-        }
+        Err(err) => Err(err),
     }
 }
 
