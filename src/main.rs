@@ -1,7 +1,5 @@
-use std::process::exit;
-
-// use clap::ArgGroup;
 use clap::{ArgGroup, Parser, Subcommand};
+use std::process::exit;
 mod add;
 mod list;
 mod new;
@@ -157,14 +155,12 @@ fn main() {
                 eprintln!("ERROR: flags --client and --platform can't be used together")
             }
         }
-        Commands::Setup { force } => {
-            match setup::setup(*force) {
-                Ok(_) => exit(0),
-                Err(err) => {
-                    eprintln!("ERROR: {}", err);
-                    exit(1)
-                }
+        Commands::Setup { force } => match setup::setup(*force) {
+            Ok(_) => exit(0),
+            Err(err) => {
+                eprintln!("ERROR: {}", err);
+                exit(1)
             }
-        }
+        },
     }
 }
