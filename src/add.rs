@@ -97,7 +97,7 @@ fn add(client: &String, platform_name: &str) -> Result<(), Error> {
                         .truecolor(255, 171, 0)
                         .bold()
                 );
-                let platform: String = platform_name.clone().to_string();
+                let platform: String = platform_name.to_string();
                 let ssh_config: Identifier = Identifier { platform };
                 let password = ssh_config.get_credential();
 
@@ -128,7 +128,7 @@ fn add(client: &String, platform_name: &str) -> Result<(), Error> {
                     {
                         eprintln!("{}", "✘ Repository already exists".red().bold());
                     } else {
-                        match clone(&platform_name, &repository_url, passhprase, &client) {
+                        match clone(platform_name, &repository_url, passhprase, client) {
                             Ok(_) => repositories.push(repository_url),
                             Err(_) => dead_repositories.push(repository_url),
                         }
@@ -252,7 +252,7 @@ pub fn new_client() {
                 .truecolor(255, 171, 0)
                 .bold()
         );
-        let platform: String = platform_name.clone().to_string();
+        let platform: String = platform_name.clone();
         let ssh_config: Identifier = Identifier { platform };
         let password = ssh_config.get_credential();
 
@@ -282,7 +282,12 @@ pub fn new_client() {
             {
                 eprintln!("{}", "✘ Repository already exists".red().bold());
             } else {
-                match clone(&platform_name, &repository_url, passhprase, &client_name) {
+                match clone(
+                    platform_name.as_str(),
+                    &repository_url,
+                    passhprase,
+                    &client_name,
+                ) {
                     Ok(_) => repositories.push(Value::String(repository_url)),
                     Err(_) => dead_repositories.push(repository_url),
                 }
