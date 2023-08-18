@@ -6,13 +6,14 @@ This is intended for people who have to manage multiple repositories from differ
 
 ## What can I do with grabber?
 With `grabber` you can do:
-- Manage platform ssh keys.
-- Add new clients.
-- Add as many platforms per client.
-- Add repositories per platforms. (WIP)
-- List repositories of a client.
-- Clone repositories and store a record in a toml file.
-- Work with a DynamoDB table to share new repositories (WIP).
+- Easily manage respositories using different keys and passwords.
+- Get a list of each client repositories.
+- Get a list of the ssh keys used.
+- Get a list of ssh keys alias (platform).
+- Clone repositories.
+- Pull and Push to repositories **(WIP)**.
+- Install all repositories through a toml file to easily migrate from devices **(WIP)**.
+- Work with a DynamoDB table to have a shared storage for teams to collaborate **(WIP)**.
 
 ## Initialize
 First you will start configuring the tool:
@@ -20,21 +21,21 @@ First you will start configuring the tool:
 grabber setup
 ```
 ### What this command does:
-- Creates a new directory called `.grabber` at yout **HOME**.
+- Creates a new directory called `.grabber` at your **HOME**.
 - Creates inside this new directory two files:
   - `grabber-config.toml`: SSH config file.
   - `grabber-repositories.toml`: Repositories database file.
 - Will ask you to introduce some values to configure the SSH config file:
   - An alias to identify this keys.
-  - The private key and public key path.
+  - The private key absolute path.
 
 #### grabber-config
 ```toml
-[alias]
+[platform-alias]
 private_key = "/home/grabber/.ssh/azure"
 public_key = "/home/grabber/.ssh/azure.pub"
 
-[github]
+[personal]
 private_key = "/home/grabber/.ssh/github"
 public_key = "/home/grabber/.ssh/github.pub"
 
@@ -43,69 +44,58 @@ public_key = "/home/grabber/.ssh/github.pub"
 #### grabber-repositories
 ```toml
 [client.alias]
-repositories = ["git@github.com:IT-Noobie/grabber.git"]
-[it-noobie.github]
-repositories = ["git@github.com:IT-Noobie/grabber.git"]
+repositories = ["git@github.com:hectorruiz-it/grabber.git"]
+[hectorruiz-it.personal]
+repositories = ["git@github.com:hectorruiz-it/grabber.git"]
 ```
 
 ## New client
-To add a new client just type:
+To add a new client and start cloning repositories just type:
 ```shell 
-grabber new --client <CLIENT>
-grabber new -c <CLIENT>
+grabber new --client
 ```
 
-## Add repository
-This is still in WIP:
+## Add and clone one or more repositories
 ```shell 
 grabber add -c <CLIENT>
 ```
 
-## List (WIP)
+## List
 ### List platforms
 ```shell
-grabber list
+grabber list --platforms
 ╭─────────────────────────╮
-│ PLATFORMS SSH KEY ALIAS │
+│ Platforms SSH Key alias │
 ╞═════════════════════════╡
-│ azure                   │
-├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
 │ github                  │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+│ personal                │
 ╰─────────────────────────╯
 ```
 ### List platform configuration
 ```shell 
 grabber list -p azure
-╭────────────────────────────────────────────────╮
-│ AZURE                                          │
-╞════════════════════════════════════════════════╡
-│ private_key = "/home/it-noobie/.ssh/azure"     │
-│ public_key = "/Users/it-noobie/.ssh/azure.pub" │
-│                                                │
-╰────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ PERSONAL                                                                                                    │
+╞═════════════════════════════════════════════════════════════════════════════════════════════════════════════╡
+│ { private_key = "/Users/hruiz/.ssh/github-personal", public_key = "/Users/hruiz/.ssh/github-personal.pub" } │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 ### List client platforms
 ```shell
 grabber list -c <CLIENT>
-╭────────────────────╮
-│  CLIENT PLATFORMS  │
-╞════════════════════╡
-│ azure              │
-├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ github             │
-╰────────────────────╯
+╭─────────────────────────╮
+│ HECTORRUIZ-IT PLATFORMS │
+╞═════════════════════════╡
+│ personal                │
+╰─────────────────────────╯
 ```
 ### List repositories of a client in a given platform
 ```shell
-grabber list -c it-noobie -p github
-╭────────────────────────────────────────╮
-│ IT-NOOBIE GITHUB REPOSITORIES          │
-╞════════════════════════════════════════╡
-│ "git@github.com:IT-Noobie/grabber.git" │
-╰────────────────────────────────────────╯
+grabber list -c hectorruiz-it -p github
+╭───────────────────────────────────────────────────────╮
+│ HECTORRUIZ-IT PERSONAL REPOSITORIES                   │
+╞═══════════════════════════════════════════════════════╡
+│ "git@github.com:hectorruiz-it/grabber.git"            │
+╰───────────────────────────────────────────────────────╯
 ```
-
-
-
-
-
