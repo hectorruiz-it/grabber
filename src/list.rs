@@ -80,7 +80,7 @@ pub fn client_platform(client: &String) -> Result<(), Error> {
 
     match toml.get(client) {
         None => {
-            eprintln!("ERROR: Doesn't exist client {}", &client);
+            eprintln!("ERROR: Client {} does not exist", &client);
             exit(1)
         }
         Some(_) => {

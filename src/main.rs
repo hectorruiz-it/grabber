@@ -45,6 +45,7 @@ enum Commands {
         clients: bool,
     },
     /// Adds a new Client
+    #[command(arg_required_else_help = true)]
     New {
         #[clap(long)]
         /// Name of the client to add
@@ -142,9 +143,9 @@ fn main() {
         }
         Commands::New { client, platform } => {
             if *client && !*platform {
-                new::client();
+                add::new_client();
             } else if !*client && *platform {
-                match new::platform() {
+                match add::new_platform() {
                     Ok(_) => exit(0),
                     Err(err) => {
                         eprintln!("{}", err);
