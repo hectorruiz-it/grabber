@@ -2,7 +2,6 @@ use clap::{ArgGroup, Parser, Subcommand};
 use std::process::exit;
 mod add;
 mod list;
-mod new;
 mod setup;
 
 #[derive(Parser)]

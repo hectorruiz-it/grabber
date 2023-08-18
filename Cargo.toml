@@ -16,3 +16,4 @@ serde = { version = "1.0.178", features = ["derive"] }
 dialoguer = "0.10.4"
 regex = "1.9.1"
 keyring = "2.0.5"
+git2 = "0.17.2"
