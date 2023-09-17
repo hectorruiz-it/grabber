@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 
 pub fn setup(force: bool) -> Result<(), String> {
     let home: PathBuf = dirs::home_dir().expect("Home directory not found");
+    let grabber_home: PathBuf = home.join(".grabber");
     let config_path: PathBuf = [".grabber", "grabber-config.toml"].iter().collect();
     let repositories_config_path: PathBuf = [".grabber", "grabber-repositories.toml"].iter().collect();
     let config_file: PathBuf = home.join(config_path);
@@ -12,7 +13,7 @@ pub fn setup(force: bool) -> Result<(), String> {
 
     match check_current_config(force, &config_files) {
         Ok(_) => {
-            create_grabber_configuration(&home, config_files);
+            create_grabber_configuration(&grabber_home, config_files);
             Ok(())
         }
         Err(err) => Err(err),
@@ -36,6 +37,7 @@ fn check_current_config(force: bool, config_files: &[PathBuf; 2]) -> Result<(), 
 }
 
 fn create_grabber_configuration(home: &PathBuf, config_files: [PathBuf; 2]) {
+    println!("{}", home.display());
     match fs::create_dir(home) {
         Ok(_) => println!("Directory has been created at: ~/.grabber/"),
         Err(_) => eprintln!("Directory already exists at: {}", &home.display()),
