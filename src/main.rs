@@ -1,8 +1,11 @@
 use clap::{ArgGroup, Parser, Subcommand};
+// use push::push;
 use std::process::exit;
+
 mod add;
 mod list;
 mod setup;
+mod push;
 
 #[derive(Parser)]
 #[clap(about, version, author)]
@@ -60,6 +63,8 @@ enum Commands {
         /// Delete current configuration and start setup
         force: bool,
     },
+    /// Push commits to remote repository
+    Push {}
 }
 
 fn main() {
@@ -162,5 +167,6 @@ fn main() {
                 exit(1)
             }
         },
+        Commands::Push {  } => println!("e")
     }
 }

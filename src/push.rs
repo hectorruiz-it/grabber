@@ -1,10 +1,12 @@
+
+
 // use std::{fs, path};
 
 // use git2::build::RepoBuilder;
 // use git2::{IndexAddOption, Repository, Signature};
 
 
-// fn main() {
+// pub fn push() -> String {
 //     let root_dir = path::Path::new("Z:/Temp");
 //     let base_path = root_dir.join("base");
 //     let remote_path = root_dir.join("remote");
@@ -22,11 +24,14 @@
 //     base_index
 //         .add_all(["."], IndexAddOption::DEFAULT, None)
 //         .unwrap();
-//     base_index.write().unwrap();
+//     match base_index.write() {
+//         Ok(_) => println!("some"),
+//         Err(err) => err,
+//     }
 
 //     // make the commit, since it's the initial commit, there's no parent
 //     let tree = base_repo
-//         .find_tree(base_index.write_tree().unwrap())
+//         .find_tree(base_index.write_tree().expect_err())
 //         .unwrap();
 //     let commit_oid = base_repo
 //         .commit(None, &author, &author, "initial", &tree, &[])
@@ -61,4 +66,7 @@
 //             .summary()
 //             .unwrap()
 //     );
+
+//     let value = "a";
+//     value.to_string();
 // }

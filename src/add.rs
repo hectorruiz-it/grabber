@@ -156,7 +156,17 @@ pub fn new_profile() -> Result<(), String> {
         let config_file: PathBuf = home.join(path);
 
         let profile_name: String = Input::with_theme(&ColorfulTheme::default())
-            .with_prompt("Enter a profile alias for the ssh key")
+            .with_prompt("Enter ssh profile name")
+            .interact_text()
+            .unwrap();
+
+        let author: String = Input::with_theme(&ColorfulTheme::default())
+            .with_prompt("Enter author name for this profile")
+            .interact_text()
+            .unwrap();
+
+        let mail: String = Input::with_theme(&ColorfulTheme::default())
+            .with_prompt("Enter mail for this profile")
             .interact_text()
             .unwrap();
 
@@ -195,6 +205,8 @@ pub fn new_profile() -> Result<(), String> {
         let mut config: Map<String, Value> = Map::new();
         let mut values: Map<String, Value> = Map::new();
 
+        values.insert(String::from("author"), Value::String(author));
+        values.insert(String::from("mail"), Value::String(mail));
         values.insert(String::from("private_key"), Value::String(key_path));
         values.insert(String::from("public_key"), Value::String(public_key));
         config.insert(profile_name, Value::Table(values));
