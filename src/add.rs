@@ -18,51 +18,51 @@ use toml::Value;
 
 #[derive(Deserialize)]
 struct Identifier {
-    platform: String,
+    profile: String,
 }
 struct Config {
-    platform_name: String,
+    profile_name: String,
     repositories: Vec<Value>,
 }
 
 impl Identifier {
     fn get_credential(&self) -> String {
-        let entry = Entry::new(self.platform.as_str(), "grabber").expect("Failed to create entry");
+        let entry = Entry::new(self.profile.as_str(), "grabber").expect("Failed to create entry");
         entry
             .get_password()
-            .expect("No password has been configured for this platform")
+            .expect("No password has been configured for this profile")
     }
 }
 
 impl Config {
-    fn add_platform(self) -> Map<String, Value> {
-        let mut platform: Map<String, Value> = Map::new();
+    fn add_profile(self) -> Map<String, Value> {
+        let mut profile: Map<String, Value> = Map::new();
         let mut repositories: Map<String, Value> = Map::new();
         repositories.insert(
             String::from("repositories"),
             Value::Array(self.repositories),
         );
-        platform.insert(self.platform_name, Value::Table(repositories));
-        platform
+        profile.insert(self.profile_name, Value::Table(repositories));
+        profile
     }
 }
 
-pub fn add_platform_repository(client: &String, platform: &Option<String>) -> Result<(), Error> {
-    match platform {
-        Some(platform_name) => {
-            match add(client, platform_name) {
+pub fn add_profile_repository(client: &String, profile: &Option<String>) -> Result<(), Error> {
+    match profile {
+        Some(profile_name) => {
+            match add(client, profile_name) {
                 Ok(_) => println!("{}", "New repositories have been configured".green().bold()),
                 Err(_) => eprintln!("{}", "ERROR: Unable to add repositories".red().bold()),
             }
             Ok(())
         }
         None => {
-            let platform_name: String = Input::with_theme(&ColorfulTheme::default())
+            let profile_name: String = Input::with_theme(&ColorfulTheme::default())
                 .with_prompt("Your name")
                 .interact_text()
                 .unwrap();
 
-            match add(client, &platform_name) {
+            match add(client, &profile_name) {
                 Ok(_) => println!("{}", "New repositories have been configured".green().bold()),
                 Err(_) => eprintln!("{}", "ERROR: Unable to add repositories".red().bold()),
             }
@@ -71,7 +71,7 @@ pub fn add_platform_repository(client: &String, platform: &Option<String>) -> Re
     }
 }
 
-fn add(client: &String, platform_name: &str) -> Result<(), Error> {
+fn add(client: &String, profile_name: &str) -> Result<(), Error> {
     let repositories_config_file_path = format!(
         "{}/.grabber/grabber-repositories.toml",
         dirs::home_dir().unwrap().display()
@@ -85,9 +85,9 @@ fn add(client: &String, platform_name: &str) -> Result<(), Error> {
     let mut dead_repositories: Vec<String> = Vec::new();
 
     match toml_edit::Document::from_str(&contents) {
-        Ok(mut file) => match file[client][platform_name]["repositories"].as_array_mut() {
+        Ok(mut file) => match file[client][profile_name]["repositories"].as_array_mut() {
             None => {
-                eprintln!("ERROR: client or platform doesn't exist. Run grabber list -c <CLIENT> to list platforms");
+                eprintln!("ERROR: client or profile doesn't exist. Run grabber list -c <CLIENT> to list profiles");
                 exit(3)
             }
             Some(repositories) => {
@@ -97,8 +97,8 @@ fn add(client: &String, platform_name: &str) -> Result<(), Error> {
                         .truecolor(255, 171, 0)
                         .bold()
                 );
-                let platform: String = platform_name.to_string();
-                let ssh_config: Identifier = Identifier { platform };
+                let profile: String = profile_name.to_string();
+                let ssh_config: Identifier = Identifier { profile };
                 let password = ssh_config.get_credential();
 
                 loop {
@@ -128,7 +128,7 @@ fn add(client: &String, platform_name: &str) -> Result<(), Error> {
                     {
                         eprintln!("{}", "✘ Repository already exists".red().bold());
                     } else {
-                        match clone(platform_name, &repository_url, passhprase, client) {
+                        match clone(profile_name, &repository_url, passhprase, client) {
                             Ok(_) => repositories.push(repository_url),
                             Err(_) => dead_repositories.push(repository_url),
                         }
@@ -149,14 +149,14 @@ fn add(client: &String, platform_name: &str) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn new_platform() -> Result<(), String> {
+pub fn new_profile() -> Result<(), String> {
     loop {
         let home: PathBuf = dirs::home_dir().expect("Home directory not found");
         let path: PathBuf = [".grabber", "grabber-config.toml"].iter().collect();
         let config_file: PathBuf = home.join(path);
 
-        let platform_name: String = Input::with_theme(&ColorfulTheme::default())
-            .with_prompt("Enter a platform alias for the ssh key")
+        let profile_name: String = Input::with_theme(&ColorfulTheme::default())
+            .with_prompt("Enter a profile alias for the ssh key")
             .interact_text()
             .unwrap();
 
@@ -186,10 +186,10 @@ pub fn new_platform() -> Result<(), String> {
             .interact()
             .unwrap();
 
-        let entry = Entry::new(&platform_name, "grabber").expect("ERROR: entry already exists");
+        let entry = Entry::new(&profile_name, "grabber").expect("ERROR: entry already exists");
         entry
             .set_password(&password)
-            .expect("ERROR: unable to open keyring platform");
+            .expect("ERROR: unable to open keyring profile");
 
         let public_key = format!("{}.pub", key_path);
         let mut config: Map<String, Value> = Map::new();
@@ -197,23 +197,23 @@ pub fn new_platform() -> Result<(), String> {
 
         values.insert(String::from("private_key"), Value::String(key_path));
         values.insert(String::from("public_key"), Value::String(public_key));
-        config.insert(platform_name, Value::Table(values));
+        config.insert(profile_name, Value::Table(values));
 
         let toml_config_file =
             toml::to_string(&config).expect("ERROR: Unable to parse data to TOML");
 
-        let mut platform_config_file: File = OpenOptions::new()
+        let mut profile_config_file: File = OpenOptions::new()
             .write(true)
             .append(true)
             .open(config_file)
             .expect("ERROR: Unable to open file with write permissions");
 
-        platform_config_file
+        profile_config_file
             .write_all(toml_config_file.as_bytes())
             .expect("ERROR: Unable to write data to config file");
 
         if !Confirm::with_theme(&ColorfulTheme::default())
-            .with_prompt("Do you want to add another platform?")
+            .with_prompt("Do you want to add another profile?")
             .interact()
             .expect("An unexpected error happened")
         {
@@ -242,8 +242,8 @@ pub fn new_client() {
 
     loop {
         let mut repositories: Vec<Value> = Vec::new();
-        let platform_name: String = Input::with_theme(&ColorfulTheme::default())
-            .with_prompt("Enter platform ssh key alias")
+        let profile_name: String = Input::with_theme(&ColorfulTheme::default())
+            .with_prompt("Enter profile ssh key alias")
             .interact_text()
             .unwrap();
         println!(
@@ -252,8 +252,8 @@ pub fn new_client() {
                 .truecolor(255, 171, 0)
                 .bold()
         );
-        let platform: String = platform_name.clone();
-        let ssh_config: Identifier = Identifier { platform };
+        let profile: String = profile_name.clone();
+        let ssh_config: Identifier = Identifier { profile };
         let password = ssh_config.get_credential();
 
         loop {
@@ -283,7 +283,7 @@ pub fn new_client() {
                 eprintln!("{}", "✘ Repository already exists".red().bold());
             } else {
                 match clone(
-                    platform_name.as_str(),
+                    profile_name.as_str(),
                     &repository_url,
                     passhprase,
                     &client_name,
@@ -302,13 +302,13 @@ pub fn new_client() {
         }
 
         let config: Config = Config {
-            platform_name,
+            profile_name,
             repositories,
         };
-        let platform = config.add_platform();
+        let profile = config.add_profile();
 
         let mut client: Map<String, Value> = Map::new();
-        client.insert(client_name.to_ascii_lowercase(), Value::Table(platform));
+        client.insert(client_name.to_ascii_lowercase(), Value::Table(profile));
 
         let toml_content = toml::to_string(&client).expect("ERROR: Parse TOML error");
 
@@ -316,7 +316,7 @@ pub fn new_client() {
             .expect("ERROR: Unable to write TOML file");
 
         if !Confirm::with_theme(&ColorfulTheme::default())
-            .with_prompt("Do you want to add another platform?")
+            .with_prompt("Do you want to add another profile?")
             .interact()
             .expect("msg")
         {
@@ -326,7 +326,7 @@ pub fn new_client() {
 
     println!(
         "{}: {}",
-        "New respository platforms have been configured for"
+        "New respository profiles have been configured for"
             .green()
             .bold(),
         client_name
@@ -334,7 +334,7 @@ pub fn new_client() {
 }
 
 fn clone(
-    platform_name: &str,
+    profile_name: &str,
     repository_url: &str,
     password: String,
     client: &str,
@@ -350,7 +350,7 @@ fn clone(
 
     let toml: Table = toml::from_str(&contents).expect("ERROR: Unable to parse TOML file");
 
-    if let Some(inner_table) = toml.get(platform_name).and_then(|v| v.as_table()) {
+    if let Some(inner_table) = toml.get(profile_name).and_then(|v| v.as_table()) {
         if let (Some(private_key), Some(public_key)) = (
             inner_table.get("private_key").and_then(|v| v.as_str()),
             inner_table.get("public_key").and_then(|v| v.as_str()),

@@ -9,7 +9,7 @@ use std::process::exit;
 use toml::value::Table;
 use toml::Value;
 
-pub fn platforms() -> Result<(), Error> {
+pub fn profiles() -> Result<(), Error> {
     let home: PathBuf = dirs::home_dir().expect("Home directory not found");
     let config_path: PathBuf = [".grabber", "grabber-config.toml"].iter().collect();
     let config_file: PathBuf = home.join(config_path);
@@ -20,7 +20,7 @@ pub fn platforms() -> Result<(), Error> {
     file.read_to_string(&mut contents).unwrap();
     let mut table = comfy_table::Table::new();
     table
-        .set_header(vec!["Platforms SSH Key alias"])
+        .set_header(vec!["SSH Profiles"])
         .load_preset(UTF8_FULL)
         .apply_modifier(UTF8_ROUND_CORNERS)
         .set_content_arrangement(ContentArrangement::Dynamic);
@@ -62,7 +62,7 @@ pub fn clients() -> Result<(), Error> {
     Ok(())
 }
 
-pub fn client_platform(client: &String) -> Result<(), Error> {
+pub fn client_profile(client: &String) -> Result<(), Error> {
     let home: PathBuf = dirs::home_dir().expect("Home directory not found");
     let repositories_config_path: PathBuf = [".grabber", "grabber-repositories.toml"].iter().collect();
     let repositories_config_file: PathBuf = home.join(repositories_config_path);
@@ -100,7 +100,7 @@ pub fn client_platform(client: &String) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn platform_key_alias_config(platform_key_alias: &String) -> Result<(), Error> {
+pub fn profile_key_alias_config(profile_key_alias: &String) -> Result<(), Error> {
     let home: PathBuf = dirs::home_dir().expect("Home directory not found");
     let config_path: PathBuf = [".grabber", "grabber-config.toml"].iter().collect();
     let config_file: PathBuf = home.join(config_path);
@@ -113,15 +113,15 @@ pub fn platform_key_alias_config(platform_key_alias: &String) -> Result<(), Erro
     let toml: Table = toml::from_str(&contents).unwrap();
     let mut table = comfy_table::Table::new();
     table
-        .set_header(vec![&platform_key_alias.to_ascii_uppercase(), "VALUES"])
+        .set_header(vec![&profile_key_alias.to_ascii_uppercase(), "VALUES"])
         .load_preset(UTF8_FULL)
         .apply_modifier(UTF8_ROUND_CORNERS)
         .set_content_arrangement(ContentArrangement::Dynamic);
 
-    match toml.get(platform_key_alias) {
-        None => eprintln!("ERROR: SSH key configuration not found for: {}\nRun 'grabber list' to show a list of all configured keys.", platform_key_alias),
+    match toml.get(profile_key_alias) {
+        None => eprintln!("ERROR: SSH key configuration not found for: {}\nRun 'grabber list' to show a list of all configured keys.", profile_key_alias),
         Some(_) => {
-            match toml[platform_key_alias].as_table() {
+            match toml[profile_key_alias].as_table() {
                 None => eprintln!("ERROR: Unable to convert to TOML data as a table"),
                 Some(inner_table) => {
                     for (key, value) in inner_table.iter() {
@@ -138,7 +138,7 @@ pub fn platform_key_alias_config(platform_key_alias: &String) -> Result<(), Erro
     Ok(())
 }
 
-pub fn client_platform_repositories(client: &String, platform: &String) -> Result<(), Error> {
+pub fn client_profile_repositories(client: &String, profile: &String) -> Result<(), Error> {
     let home: PathBuf = dirs::home_dir().expect("Home directory not found");
     let repositories_config_path: PathBuf = [".grabber", "grabber-repositories.toml"].iter().collect();
     let repositories_config_file: PathBuf = home.join(repositories_config_path);
@@ -153,7 +153,7 @@ pub fn client_platform_repositories(client: &String, platform: &String) -> Resul
         .set_header(vec![format!(
             "{} {} REPOSITORIES",
             &client.to_ascii_uppercase(),
-            &platform.to_ascii_uppercase()
+            &profile.to_ascii_uppercase()
         )])
         .load_preset(UTF8_FULL)
         .apply_modifier(UTF8_ROUND_CORNERS)
@@ -162,10 +162,10 @@ pub fn client_platform_repositories(client: &String, platform: &String) -> Resul
     match toml.get(client) {
         None => eprintln!("ERROR: Client {} not found.\nRun 'grabber list --clients' to show a list of all clients.", client),
         Some(client_id) => {
-            match client_id.get(platform) {
-                None => eprintln!("ERROR: Platform not found for the given client.\nRun 'grabber list --client {}' to show a list of all platforms.", client),
-                Some(platform_key_alias) => {
-                    let inner_table = platform_key_alias["repositories"].as_array().unwrap();
+            match client_id.get(profile) {
+                None => eprintln!("ERROR: Profile not found for the given client.\nRun 'grabber list --client {}' to show a list of all profile.", client),
+                Some(profile_key_alias) => {
+                    let inner_table = profile_key_alias["repositories"].as_array().unwrap();
                     for value in inner_table {
                         let mut row: Row = Row::new();
                         row.add_cell(Cell::new(value));

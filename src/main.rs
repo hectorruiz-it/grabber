@@ -20,24 +20,24 @@ enum Commands {
         client: String,
 
         #[clap(short, long)]
-        /// Platform to add the repository
-        platform: Option<String>,
+        /// profile to add the repository
+        profile: Option<String>,
     },
-    /// List client platforms and repositories
+    /// List client profiles and repositories
     #[command(arg_required_else_help = true)]
-    #[command(group = ArgGroup::new("simple").conflicts_with_all(["client", "platform"]))]
+    #[command(group = ArgGroup::new("simple").conflicts_with_all(["client", "profile"]))]
     List {
         #[clap(short, long)]
         /// Name of the client to list
         client: Option<String>,
 
         #[clap(short, long)]
-        /// Name of the platform key alias
-        platform: Option<String>,
+        /// Name of the ssh profile
+        profile: Option<String>,
 
         #[clap(group = "simple", long)]
-        /// List all platform ssh key alias
-        platforms: bool,
+        /// List all ssh profiles
+        profiles: bool,
 
         #[clap(group = "simple", long)]
         /// List all clients
@@ -51,8 +51,8 @@ enum Commands {
         client: bool,
 
         #[clap(long)]
-        /// Name of the platform to add
-        platform: bool,
+        /// Name of the profile to add
+        profile: bool,
     },
     /// Configure script files and directory. You must run this first.
     Setup {
@@ -65,9 +65,9 @@ enum Commands {
 fn main() {
     let value = Value::parse();
     match &value.command {
-        Commands::Add { client, platform } => {
-            if platform.is_none() {
-                match add::add_platform_repository(client, platform) {
+        Commands::Add { client, profile } => {
+            if profile.is_none() {
+                match add::add_profile_repository(client, profile) {
                     Ok(_) => exit(0),
                     Err(err) => {
                         eprintln!("ERROR: {}", err);
@@ -75,8 +75,8 @@ fn main() {
                     }
                 }
             }
-            if platform.is_some() {
-                match add::add_platform_repository(client, platform) {
+            if profile.is_some() {
+                match add::add_profile_repository(client, profile) {
                     Ok(_) => exit(0),
                     Err(err) => {
                         eprintln!("ERROR: {}", err);
@@ -87,14 +87,14 @@ fn main() {
         }
         Commands::List {
             client,
-            platform,
-            platforms,
+            profile,
+            profiles,
             clients,
         } => {
-            if client.is_some() && platform.is_some() {
-                match list::client_platform_repositories(
+            if client.is_some() && profile.is_some() {
+                match list::client_profile_repositories(
                     &client.to_owned().unwrap(),
-                    &platform.to_owned().unwrap(),
+                    &profile.to_owned().unwrap(),
                 ) {
                     Ok(_) => exit(0),
                     Err(err) => {
@@ -103,8 +103,8 @@ fn main() {
                     }
                 };
             };
-            if client.is_some() && platform.is_none() {
-                match list::client_platform(&client.to_owned().unwrap()) {
+            if client.is_some() && profile.is_none() {
+                match list::client_profile(&client.to_owned().unwrap()) {
                     Ok(_) => exit(0),
                     Err(err) => {
                         eprintln!("ERROR: {}", err);
@@ -112,8 +112,8 @@ fn main() {
                     }
                 }
             }
-            if client.is_none() && platform.is_some() {
-                match list::platform_key_alias_config(&platform.to_owned().unwrap()) {
+            if client.is_none() && profile.is_some() {
+                match list::profile_key_alias_config(&profile.to_owned().unwrap()) {
                     Ok(_) => exit(0),
                     Err(err) => {
                         eprintln!("ERROR: {}", err);
@@ -121,8 +121,8 @@ fn main() {
                     }
                 };
             };
-            if *platforms {
-                match list::platforms() {
+            if *profiles {
+                match list::profiles() {
                     Ok(_) => exit(0),
                     Err(err) => {
                         eprintln!("ERROR: {}", err);
@@ -140,11 +140,11 @@ fn main() {
                 }
             }
         }
-        Commands::New { client, platform } => {
-            if *client && !*platform {
+        Commands::New { client, profile } => {
+            if *client && !*profile {
                 add::new_client();
-            } else if !*client && *platform {
-                match add::new_platform() {
+            } else if !*client && *profile {
+                match add::new_profile() {
                     Ok(_) => exit(0),
                     Err(err) => {
                         eprintln!("{}", err);
@@ -152,7 +152,7 @@ fn main() {
                     }
                 }
             } else {
-                eprintln!("ERROR: flags --client and --platform can't be used together")
+                eprintln!("ERROR: flags --client and --profile can't be used together")
             }
         }
         Commands::Setup { force } => match setup::setup(*force) {
