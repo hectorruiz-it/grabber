@@ -30,7 +30,7 @@ pub fn platforms() -> Result<(), Error> {
         row.add_cell(Cell::new(key));
         table.add_row(row);
     }
-    println!("{table}");
+    println!("{}", table);
     Ok(())
 }
 
@@ -111,19 +111,28 @@ pub fn platform_key_alias_config(platform_key_alias: &String) -> Result<(), Erro
     file.read_to_string(&mut contents).unwrap();
 
     let toml: Table = toml::from_str(&contents).unwrap();
+    let mut table = comfy_table::Table::new();
+    table
+        .set_header(vec![&platform_key_alias.to_ascii_uppercase(), "VALUES"])
+        .load_preset(UTF8_FULL)
+        .apply_modifier(UTF8_ROUND_CORNERS)
+        .set_content_arrangement(ContentArrangement::Dynamic);
+
     match toml.get(platform_key_alias) {
         None => eprintln!("ERROR: SSH key configuration not found for: {}\nRun 'grabber list' to show a list of all configured keys.", platform_key_alias),
-        Some(key) => {
-            let mut table = comfy_table::Table::new();
-            table
-                .set_header(vec![&platform_key_alias.to_ascii_uppercase()])
-                .load_preset(UTF8_FULL)
-                .apply_modifier(UTF8_ROUND_CORNERS)
-                .set_content_arrangement(ContentArrangement::Dynamic);
-            let mut row: Row = Row::new();
-            row.add_cell(Cell::new(key));
-            table.add_row(row);
-            println!("{}", table);
+        Some(_) => {
+            match toml[platform_key_alias].as_table() {
+                None => eprintln!("ERROR: Unable to convert to TOML data as a table"),
+                Some(inner_table) => {
+                    for (key, value) in inner_table.iter() {
+                        let mut row: Row = Row::new();
+                        row.add_cell(Cell::new(key));
+                        row.add_cell(Cell::new(value));
+                        table.add_row(row);
+                    }
+                    println!("{}", table);
+                }
+            }
         },
     }
     Ok(())
