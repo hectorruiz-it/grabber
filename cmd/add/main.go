@@ -1,7 +1,8 @@
 /*
 Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 */
-package cmd
+
+package add
 
 import (
 	"fmt"
@@ -10,6 +11,11 @@ import (
 
 	"github.com/pelletier/go-toml/v2"
 	"github.com/spf13/cobra"
+)
+
+const (
+	PROFILES_FILE_PATH = "/.grabber/grabber-profiles"
+	MAPPINGS_FILE_PATH = "/.grabber/.grabber-config"
 )
 
 type Profile struct {
@@ -35,8 +41,7 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	rootCmd.AddCommand(addCmd)
-
+	grabber.rootCmd.AddCommand(addCmd)
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
@@ -48,55 +53,55 @@ func init() {
 	// addCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func checkPathAbsoluteExists(keyPath string) error {
+func checkPathAbsoluteExists(keyPath string, id string) error {
 
 	if !filepath.IsAbs(keyPath) {
 		return fmt.Errorf("grabber: path is not absolute.")
 	}
 
 	if _, err := os.Stat(keyPath); os.IsNotExist(err) {
-		return fmt.Errorf("grabber: ssh key does not exist on the given path.")
+		return fmt.Errorf("grabber: " + id + " does not exist on the given path.")
 	}
 	return nil
 }
 
 func addKey() {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	var id string
 	fmt.Print("> Enter profile ID: ")
 	fmt.Scanln(&id)
 
-	// var privateSshKeyPath string
-	// fmt.Print("> Enter SSH private key absolute path: ")
-	// fmt.Scanln(&privateSshKeyPath)
+	var privateSshKeyPath string
+	fmt.Print("> Enter SSH private key absolute path: ")
+	fmt.Scanln(&privateSshKeyPath)
 
-	// if err := checkPathAbsoluteExists(privateSshKeyPath); err != nil {
-	// 	fmt.Println(err)
-	// 	os.Exit(1)
-	// }
+	if err := checkPathAbsoluteExists(privateSshKeyPath, "ssh key"); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
-	// if err := checkPathAbsoluteExists(privateSshKeyPath + ".pub"); err != nil {
-	// 	fmt.Println(err)
-	// 	os.Exit(1)
-	// }
+	if err := checkPathAbsoluteExists(privateSshKeyPath+".pub", "ssh key"); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
-	file, err := os.ReadFile("/home/hruiz/.grabber/grabber-profiles.toml")
+	if err := checkPathAbsoluteExists(homeDir+PROFILES_FILE_PATH, "file"); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	file, err := os.ReadFile(homeDir + PROFILES_FILE_PATH)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	// doc := `
-	// [github]
-	// privateKey = '/home/hruiz/.ssh/github'
-	// publicKey = '/home/hruiz/.ssh/github.pub'
-	// `
-
 	v := make(map[string]interface{})
 	v[id] = map[string]string{}
-	// data[id] = map[string]string{
-	// 	"privateKey": privateSshKeyPath,
-	// 	"publicKey":  privateSshKeyPath + ".pub",
-	// }
 
 	if err := toml.Unmarshal([]byte(file), &v); err != nil {
 		fmt.Println(err)
