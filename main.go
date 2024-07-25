@@ -5,8 +5,7 @@ package main
 
 import (
 	grabber "github.com/hectorruiz-it/grabber/cmd"
-	// _ "github.com/hectorruiz-it/grabber/cmd/add"
-	// _ "github.com/hectorruiz-it/grabber/cmd/list"
+	_ "github.com/hectorruiz-it/grabber/cmd/profiles"
 )
 
 func main() {
