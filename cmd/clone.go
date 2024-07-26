@@ -20,6 +20,10 @@ var cloneCmd = &cobra.Command{
 	},
 }
 
+/*
+grabber clone --profile
+*/
+
 func init() {
 	RootCmd.AddCommand(cloneCmd)
 }

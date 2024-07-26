@@ -1,6 +1,7 @@
 package grabber
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -14,6 +15,17 @@ const (
 	PROFILES_TOKEN_FILE_PATH = "/.grabber/grabber-token-profiles"
 	MAPPINGS_FILE_PATH       = "/.grabber/.grabber-config.json"
 )
+
+// User struct which contains a name
+// a type and a list of social links
+type Profiles struct {
+	Profiles []Profile `json:"profiles"`
+}
+
+type Profile struct {
+	Profile      string   `json:"profile"`
+	Repositories []string `json:"repositories"`
+}
 
 func CheckAndReturnError(err error) {
 	if err != nil {
@@ -51,15 +63,30 @@ func checkFileExists(filePath string) {
 	}
 }
 
-// func CheckSectionExists(file *ini.File, profile string, method string) error {
-// 	if !file.HasSection(profile) {
-// 		err := fmt.Errorf("grabber: profile already exists with " + method + " authentication")
-// 		return err
-// 	}
-// 	return nil
-// }
+func ReadGrabberConfig() Profiles {
+	homeDir := GetHomeDirectory()
+	jsonFile, err := os.ReadFile(homeDir + MAPPINGS_FILE_PATH)
+	// ReadCheckExistsProfiles(profile)
+	CheckAndReturnError(err)
 
-func ReadBasiceProfilesFile() *ini.File {
+	var config Profiles
+
+	err = json.Unmarshal(jsonFile, &config)
+	CheckAndReturnError(err)
+
+	return config
+	// for _, id := range config.Profiles {
+	// 	// fmt.Println(id.Profile)
+	// 	if id.Profile == profile {
+	// 		return id.Repositories
+	// 	}
+	// }
+	// err = fmt.Errorf("grabber: no repositories cloned yet with " + profile + " profile.")
+	// CheckAndReturnError(err)
+	// return nil
+}
+
+func ReadBasicProfilesFile() *ini.File {
 	homeDir := GetHomeDirectory()
 	basicProfiles, err := ini.Load(homeDir + PROFILES_BASIC_FILE_PATH)
 	CheckAndReturnError(err)
@@ -80,22 +107,35 @@ func ReadTokenProfilesFile() *ini.File {
 	return tokenProfiles
 }
 
-func ReadCheckExistsProfiles(profile string) (*ini.File, *ini.File, *ini.File) {
-	basicProfiles := ReadBasiceProfilesFile()
+func ReadCheckExistsProfiles(profile string, validation bool) bool {
+	basicProfiles := ReadBasicProfilesFile()
 	sshProfiles := ReadSshProfilesFile()
 	tokenProfiles := ReadTokenProfilesFile()
 
+	var err error
 	switch {
-	case basicProfiles.HasSection(profile):
-		err := fmt.Errorf("grabber: profile " + profile + " already exists with basic method")
+	case validation && basicProfiles.HasSection(profile):
+		err = fmt.Errorf("grabber: profile " + profile + " already exists with basic method")
 		CheckAndReturnError(err)
-	case sshProfiles.HasSection(profile):
-		err := fmt.Errorf("grabber: profile " + profile + " already exists with token method")
+
+	case validation && sshProfiles.HasSection(profile):
+		err = fmt.Errorf("grabber: profile " + profile + " already exists with token method")
 		CheckAndReturnError(err)
-	case tokenProfiles.HasSection(profile):
-		err := fmt.Errorf("grabber: profile " + profile + " already exists with ssh method")
+
+	case validation && tokenProfiles.HasSection(profile):
+		err = fmt.Errorf("grabber: profile " + profile + " already exists with ssh method")
 		CheckAndReturnError(err)
+	case validation:
+		return true
 	}
 
-	return basicProfiles, sshProfiles, tokenProfiles
+	switch {
+	case basicProfiles.HasSection(profile):
+		return true
+	case sshProfiles.HasSection(profile):
+		return true
+	case tokenProfiles.HasSection(profile):
+		return true
+	}
+	return false
 }

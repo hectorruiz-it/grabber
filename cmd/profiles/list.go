@@ -13,24 +13,75 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var list = &cobra.Command{
+	Use:   "list",
+	Short: "List grabber configured authentication methods and repositories.",
+	Long:  `List grabber configured authentication methods and repositories.`,
+	Args:  cobra.ExactArgs(0),
+	Run: func(cmd *cobra.Command, args []string) {
+		cmd.Help()
+	},
+}
+
 var listProfiles = &cobra.Command{
-	Use:   "list-profiles",
-	Short: "List grabber configured authentication methods.",
-	Long:  `List grabber configured authentication methods`,
+	Use:   "profiles",
+	Short: "List grabber configured profiles.",
+	Long:  `List grabber configured profiles.`,
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		getProfiles()
 	},
 }
 
+var listRepositories = &cobra.Command{
+	Use:   "repositories",
+	Short: "List grabber repositories using a given profile.",
+	Long:  `List grabber repositories using a given profile.`,
+	Args:  cobra.ExactArgs(0),
+	Run: func(cmd *cobra.Command, args []string) {
+		profile, err := cmd.Flags().GetString("profile")
+		common.CheckAndReturnError(err)
+		err = fmt.Errorf("grabber: profile is not configured.")
+		if !common.ReadCheckExistsProfiles(profile, false) {
+			common.CheckAndReturnError(err)
+		}
+
+		var repositories []string
+		config := common.ReadGrabberConfig()
+		for _, id := range config.Profiles {
+			// fmt.Println(id.Profile)
+			if id.Profile == profile {
+				repositories = id.Repositories
+			}
+		}
+		// fmt.Println(repositories)
+		if len(repositories) == 0 {
+			err = fmt.Errorf("grabber: no repositories cloned yet with " + profile + " profile.")
+			common.CheckAndReturnError(err)
+		}
+		sort.Strings(repositories)
+		tbl := table.New("Repositories")
+		headerFmt := color.New(color.Underline).SprintfFunc()
+		tbl.WithHeaderFormatter(headerFmt)
+		for _, id := range repositories {
+			tbl.AddRow(id)
+		}
+		tbl.Print()
+
+	},
+}
+
 func init() {
-	common.RootCmd.AddCommand(listProfiles)
+	common.RootCmd.AddCommand(list)
+	list.AddCommand(listProfiles)
+	list.AddCommand(listRepositories)
+	listRepositories.Flags().StringP("profile", "p", "", "grabber profile name")
+	listRepositories.MarkFlagRequired("profile")
 }
 
 func getProfiles() {
-	headerFmt := color.New(color.Underline).SprintfFunc()
 
-	basicProfiles := common.ReadBasiceProfilesFile()
+	basicProfiles := common.ReadBasicProfilesFile()
 	sshProfiles := common.ReadSshProfilesFile()
 	tokenProfiles := common.ReadTokenProfilesFile()
 
@@ -65,6 +116,7 @@ func getProfiles() {
 
 	sort.Strings(profilesList)
 	tbl := table.New("Profile", "AuthMethod")
+	headerFmt := color.New(color.Underline).SprintfFunc()
 	tbl.WithHeaderFormatter(headerFmt)
 	for _, profile := range profilesList {
 		tbl.AddRow(profile, profilesMap[profile])

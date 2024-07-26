@@ -45,18 +45,21 @@ func init() {
 }
 
 func createProfile(newProfile string, basic bool, ssh bool, token bool) {
-	basicProfiles, sshProfiles, tokenProfiles := common.ReadCheckExistsProfiles(newProfile)
+	common.ReadCheckExistsProfiles(newProfile, true)
 	homeDir := common.GetHomeDirectory()
 
 	var appliedProfiles *ini.File
 	switch {
 	case basic:
+		basicProfiles := common.ReadBasicProfilesFile()
 		appliedProfiles = basicProfile(basicProfiles, newProfile)
 		appliedProfiles.SaveTo(homeDir + common.PROFILES_BASIC_FILE_PATH)
 	case ssh:
+		sshProfiles := common.ReadSshProfilesFile()
 		appliedProfiles = sshProfile(sshProfiles, newProfile)
 		appliedProfiles.SaveTo(homeDir + common.PROFILES_SSH_FILE_PATH)
 	case token:
+		tokenProfiles := common.ReadTokenProfilesFile()
 		appliedProfiles = tokenProfile(tokenProfiles, newProfile)
 		appliedProfiles.SaveTo(homeDir + common.PROFILES_TOKEN_FILE_PATH)
 	}
