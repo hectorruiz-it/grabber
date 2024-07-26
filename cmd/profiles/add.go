@@ -42,6 +42,7 @@ func init() {
 	addCommand.Flags().Bool("token", false, "add token based authentication")
 	addCommand.Flags().Bool("basic", false, "add user password authentication")
 	addCommand.MarkFlagsMutuallyExclusive("ssh", "token", "basic")
+	addCommand.MarkFlagsOneRequired("ssh", "token", "basic")
 }
 
 func createProfile(newProfile string, basic bool, ssh bool, token bool) {
