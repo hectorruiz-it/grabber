@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
+Copyright © 2024 HÉCTOR <EMAIL ADDRESS>
 */
 
 package profiles
@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 
 	common "github.com/hectorruiz-it/grabber/cmd"
-	"gopkg.in/ini.v1"
-
 	"github.com/spf13/cobra"
+	"github.com/zalando/go-keyring"
+	"gopkg.in/ini.v1"
 )
 
 var addCommand = &cobra.Command{
@@ -31,8 +31,8 @@ private an public keys, token or user auth`,
 
 		token, err := cmd.Flags().GetBool("token")
 		common.CheckAndReturnError(err)
-
 		createProfile(args[0], basic, ssh, token)
+
 	},
 }
 
@@ -50,19 +50,24 @@ func createProfile(newProfile string, basic bool, ssh bool, token bool) {
 	homeDir := common.GetHomeDirectory()
 
 	var appliedProfiles *ini.File
+	model := profileTui(basic, ssh, token)
+
 	switch {
 	case basic:
 		basicProfiles := common.ReadBasicProfilesFile()
-		appliedProfiles = basicProfile(basicProfiles, newProfile)
+		appliedProfiles = addConfigUsernameProfile(basicProfiles, newProfile, model)
 		appliedProfiles.SaveTo(homeDir + common.PROFILES_BASIC_FILE_PATH)
+		storeOnKeychain(newProfile, model.inputs[2].Value())
 	case ssh:
 		sshProfiles := common.ReadSshProfilesFile()
-		appliedProfiles = sshProfile(sshProfiles, newProfile)
+		appliedProfiles = addConfigSshProfile(sshProfiles, newProfile, model)
 		appliedProfiles.SaveTo(homeDir + common.PROFILES_SSH_FILE_PATH)
+		storeOnKeychain(newProfile, model.inputs[1].Value())
 	case token:
 		tokenProfiles := common.ReadTokenProfilesFile()
-		appliedProfiles = tokenProfile(tokenProfiles, newProfile)
+		appliedProfiles = addConfigUsernameProfile(tokenProfiles, newProfile, model)
 		appliedProfiles.SaveTo(homeDir + common.PROFILES_TOKEN_FILE_PATH)
+		storeOnKeychain(newProfile, model.inputs[1].Value())
 	}
 
 	fmt.Println("grabber: " + newProfile + " profile configured.")
@@ -88,123 +93,31 @@ func checkPathAbsoluteExists(keyPath string, id string) error {
 	return nil
 }
 
-func basicProfile(profiles *ini.File, newProfile string) *ini.File {
+func addConfigSshProfile(profiles *ini.File, newProfile string, model model) *ini.File {
 	section, err := profiles.NewSection(newProfile)
 	common.CheckAndReturnError(err)
 
-loop:
-	for {
-		var username string
-		fmt.Print("> Enter git username: ")
-		fmt.Scanln(&username)
+	_, err = section.NewKey("private_key", model.inputs[0].Value())
+	common.CheckAndReturnError(err)
+	_, err = section.NewKey("public_key", model.inputs[1].Value())
+	common.CheckAndReturnError(err)
 
-		var password string
-		fmt.Print("> Enter user password: ")
-		fmt.Scanln(&password)
-
-		fmt.Println("grabber: Your profile configuration is the following: ")
-		fmt.Println("> Profile ID:", newProfile)
-		fmt.Println("> Username:", username)
-		fmt.Println("> Password:", password)
-
-		var apply string
-		fmt.Print("grabber: do you want to apply this configuration [Y/n]: ")
-		fmt.Scanln(&apply)
-
-		switch {
-		case apply == "n" || apply == "N":
-			fmt.Println("grabber: configuration not applied.")
-			continue loop
-		default:
-			var err error
-			_, err = section.NewKey("username", username)
-			common.CheckAndReturnError(err)
-			_, err = section.NewKey("password", password)
-			common.CheckAndReturnError(err)
-			break loop
-		}
-	}
 	return profiles
 }
 
-func sshProfile(profiles *ini.File, newProfile string) *ini.File {
+func addConfigUsernameProfile(profiles *ini.File, newProfile string, model model) *ini.File {
 	section, err := profiles.NewSection(newProfile)
 	common.CheckAndReturnError(err)
 
-loop:
-	for {
-		var privateSshKeyPath string
-		fmt.Print("> Enter SSH private key absolute path: ")
-		fmt.Scanln(&privateSshKeyPath)
+	_, err = section.NewKey("username", model.inputs[0].Value())
+	common.CheckAndReturnError(err)
 
-		if err := checkPathAbsoluteExists(privateSshKeyPath, "ssh key"); err != nil {
-			common.CheckAndReturnError(err)
-		}
-
-		if err := checkPathAbsoluteExists(privateSshKeyPath+".pub", "public ssh key"); err != nil {
-			common.CheckAndReturnError(err)
-		}
-
-		fmt.Println("grabber: Your profile configuration is the following: ")
-		fmt.Println("> Profile ID:", newProfile)
-		fmt.Println("> Private Key Path:", privateSshKeyPath)
-		fmt.Println("> Public Key Path:", privateSshKeyPath+".pub")
-
-		var apply string
-		fmt.Print("grabber: do you want to apply this configuration [Y/n]: ")
-		fmt.Scanln(&apply)
-
-		switch {
-		case apply == "n" || apply == "N":
-			fmt.Println("grabber: configuration not applied.")
-			continue loop
-		default:
-			var err error
-			_, err = section.NewKey("private_key", privateSshKeyPath)
-			common.CheckAndReturnError(err)
-			_, err = section.NewKey("public_key", privateSshKeyPath+".pub")
-			common.CheckAndReturnError(err)
-			break loop
-		}
-	}
 	return profiles
 }
 
-func tokenProfile(profiles *ini.File, newProfile string) *ini.File {
-	section, err := profiles.NewSection(newProfile)
+func storeOnKeychain(profile string, password string) {
+	service := "grabber"
+
+	err := keyring.Set(service, profile+"-profile", password)
 	common.CheckAndReturnError(err)
-
-loop:
-	for {
-		var username string
-		fmt.Print("> Enter git username: ")
-		fmt.Scanln(&username)
-
-		var token string
-		fmt.Print("> Enter user token: ")
-		fmt.Scanln(&token)
-
-		fmt.Println("grabber: Your profile configuration is the following: ")
-		fmt.Println("> Profile ID:", newProfile)
-		fmt.Println("> Username:", username)
-		fmt.Println("> Token:", token)
-
-		var apply string
-		fmt.Print("grabber: do you want to apply this configuration [Y/n]: ")
-		fmt.Scanln(&apply)
-
-		switch {
-		case apply == "n" || apply == "N":
-			fmt.Println("grabber: configuration not applied.")
-			continue loop
-		default:
-			var err error
-			_, err = section.NewKey("username", username)
-			common.CheckAndReturnError(err)
-			_, err = section.NewKey("token", token)
-			common.CheckAndReturnError(err)
-			break loop
-		}
-	}
-	return profiles
 }

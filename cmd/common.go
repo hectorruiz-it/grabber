@@ -66,7 +66,6 @@ func checkFileExists(filePath string) {
 func ReadGrabberConfig() Profiles {
 	homeDir := GetHomeDirectory()
 	jsonFile, err := os.ReadFile(homeDir + MAPPINGS_FILE_PATH)
-	// ReadCheckExistsProfiles(profile)
 	CheckAndReturnError(err)
 
 	var config Profiles
@@ -75,15 +74,6 @@ func ReadGrabberConfig() Profiles {
 	CheckAndReturnError(err)
 
 	return config
-	// for _, id := range config.Profiles {
-	// 	// fmt.Println(id.Profile)
-	// 	if id.Profile == profile {
-	// 		return id.Repositories
-	// 	}
-	// }
-	// err = fmt.Errorf("grabber: no repositories cloned yet with " + profile + " profile.")
-	// CheckAndReturnError(err)
-	// return nil
 }
 
 func ReadBasicProfilesFile() *ini.File {
@@ -119,11 +109,11 @@ func ReadCheckExistsProfiles(profile string, validation bool) bool {
 		CheckAndReturnError(err)
 
 	case validation && sshProfiles.HasSection(profile):
-		err = fmt.Errorf("grabber: profile " + profile + " already exists with token method")
+		err = fmt.Errorf("grabber: profile " + profile + " already exists with ssh method")
 		CheckAndReturnError(err)
 
 	case validation && tokenProfiles.HasSection(profile):
-		err = fmt.Errorf("grabber: profile " + profile + " already exists with ssh method")
+		err = fmt.Errorf("grabber: profile " + profile + " already exists with token method")
 		CheckAndReturnError(err)
 	case validation:
 		return true
