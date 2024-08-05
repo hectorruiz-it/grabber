@@ -42,7 +42,8 @@ var listRepositories = &cobra.Command{
 		profile, err := cmd.Flags().GetString("profile")
 		common.CheckAndReturnError(err)
 		err = fmt.Errorf("grabber: profile is not configured.")
-		if !common.ReadCheckExistsProfiles(profile, false) {
+		check, _ := common.ReadCheckExistsProfiles(profile, false)
+		if !check {
 			common.CheckAndReturnError(err)
 		}
 

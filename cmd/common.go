@@ -49,7 +49,7 @@ func setup() {
 	checkFileExists(homeDir + PROFILES_BASIC_FILE_PATH)
 	checkFileExists(homeDir + PROFILES_SSH_FILE_PATH)
 	checkFileExists(homeDir + PROFILES_TOKEN_FILE_PATH)
-	checkFileExists(homeDir + MAPPINGS_FILE_PATH)
+	checkMappingsFileExists(homeDir + MAPPINGS_FILE_PATH)
 }
 
 func checkFileExists(filePath string) {
@@ -58,6 +58,20 @@ func checkFileExists(filePath string) {
 			err = fmt.Errorf("grabber: unable to create file on .grabber directory. Permissions error.")
 			CheckAndReturnError(err)
 		}
+	} else {
+		CheckAndReturnError(err)
+	}
+}
+
+func checkMappingsFileExists(filePath string) {
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		if _, err := os.Create(filePath); os.IsPermission(err) {
+			err = fmt.Errorf("grabber: unable to create file on .grabber directory. Permissions error.")
+			CheckAndReturnError(err)
+		}
+		data, err := json.Marshal(Profiles{})
+		CheckAndReturnError(err)
+		os.WriteFile(filePath, data, 0700)
 	} else {
 		CheckAndReturnError(err)
 	}
@@ -97,10 +111,12 @@ func ReadTokenProfilesFile() *ini.File {
 	return tokenProfiles
 }
 
-func ReadCheckExistsProfiles(profile string, validation bool) bool {
+func ReadCheckExistsProfiles(profile string, validation bool) (bool, map[string]bool) {
 	basicProfiles := ReadBasicProfilesFile()
 	sshProfiles := ReadSshProfilesFile()
 	tokenProfiles := ReadTokenProfilesFile()
+
+	profileCheck := make(map[string]bool, 3)
 
 	var err error
 	switch {
@@ -116,16 +132,25 @@ func ReadCheckExistsProfiles(profile string, validation bool) bool {
 		err = fmt.Errorf("grabber: profile " + profile + " already exists with token method")
 		CheckAndReturnError(err)
 	case validation:
-		return true
+		return true, profileCheck
 	}
 
 	switch {
 	case basicProfiles.HasSection(profile):
-		return true
+		profileCheck["basic"] = true
+		profileCheck["ssh"] = false
+		profileCheck["token"] = false
+		return true, profileCheck
 	case sshProfiles.HasSection(profile):
-		return true
+		profileCheck["basic"] = false
+		profileCheck["ssh"] = true
+		profileCheck["token"] = false
+		return true, profileCheck
 	case tokenProfiles.HasSection(profile):
-		return true
+		profileCheck["basic"] = false
+		profileCheck["ssh"] = false
+		profileCheck["token"] = true
+		return true, profileCheck
 	}
-	return false
+	return false, profileCheck
 }

@@ -1,13 +1,14 @@
 /*
 Copyright © 2024 HÉCTOR <EMAIL ADDRESS>
 */
-package grabber
+package git_actions
 
 import (
 	"fmt"
 	"os"
 
 	"github.com/go-git/go-git/v5"
+	common "github.com/hectorruiz-it/grabber/cmd"
 	"github.com/spf13/cobra"
 )
 
@@ -22,21 +23,21 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("pull called")
+		// fmt.Println("pull called")
 		pull()
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(pullCmd)
+	common.RootCmd.AddCommand(pullCmd)
 }
 
 func pull() {
 	repository, err := git.PlainOpen("./")
-	CheckAndReturnError(err)
+	common.CheckAndReturnError(err)
 
 	w, err := repository.Worktree()
-	CheckAndReturnError(err)
+	common.CheckAndReturnError(err)
 
 	err = w.Pull(&git.PullOptions{})
 
@@ -45,6 +46,6 @@ func pull() {
 		fmt.Println("grabber: already up to date")
 		os.Exit(0)
 	default:
-		CheckAndReturnError(err)
+		common.CheckAndReturnError(err)
 	}
 }

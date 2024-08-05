@@ -5,6 +5,7 @@ Copyright © 2024 HÉCTOR <EMAIL ADDRESS>
 package profiles
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -57,17 +58,20 @@ func createProfile(newProfile string, basic bool, ssh bool, token bool) {
 		basicProfiles := common.ReadBasicProfilesFile()
 		appliedProfiles = addConfigUsernameProfile(basicProfiles, newProfile, model)
 		appliedProfiles.SaveTo(homeDir + common.PROFILES_BASIC_FILE_PATH)
-		storeOnKeychain(newProfile, model.inputs[2].Value())
+		storeOnKeychain(newProfile, model.inputs[1].Value())
+		addProfileToConfig(newProfile)
 	case ssh:
 		sshProfiles := common.ReadSshProfilesFile()
 		appliedProfiles = addConfigSshProfile(sshProfiles, newProfile, model)
 		appliedProfiles.SaveTo(homeDir + common.PROFILES_SSH_FILE_PATH)
-		storeOnKeychain(newProfile, model.inputs[1].Value())
+		storeOnKeychain(newProfile, model.inputs[2].Value())
+		addProfileToConfig(newProfile)
 	case token:
 		tokenProfiles := common.ReadTokenProfilesFile()
 		appliedProfiles = addConfigUsernameProfile(tokenProfiles, newProfile, model)
 		appliedProfiles.SaveTo(homeDir + common.PROFILES_TOKEN_FILE_PATH)
 		storeOnKeychain(newProfile, model.inputs[1].Value())
+		addProfileToConfig(newProfile)
 	}
 
 	fmt.Println("grabber: " + newProfile + " profile configured.")
@@ -120,4 +124,21 @@ func storeOnKeychain(profile string, password string) {
 
 	err := keyring.Set(service, profile+"-profile", password)
 	common.CheckAndReturnError(err)
+}
+
+func addProfileToConfig(profile string) {
+	config := common.ReadGrabberConfig()
+	homeDir := common.GetHomeDirectory()
+
+	config.Profiles = append(config.Profiles, common.Profile{
+		Profile:      profile,
+		Repositories: []string{},
+	})
+
+	data, err := json.Marshal(config)
+	common.CheckAndReturnError(err)
+
+	err = os.WriteFile(homeDir+common.MAPPINGS_FILE_PATH, data, 0700)
+	common.CheckAndReturnError(err)
+
 }
