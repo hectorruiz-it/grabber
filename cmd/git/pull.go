@@ -67,6 +67,8 @@ func pull() {
 		})
 
 		switch err {
+		case nil:
+			break
 		case git.NoErrAlreadyUpToDate:
 			fmt.Println("grabber: already up to date")
 			os.Exit(0)
@@ -86,6 +88,8 @@ func pull() {
 		})
 
 		switch err {
+		case nil:
+			break
 		case git.NoErrAlreadyUpToDate:
 			fmt.Println("grabber: already up to date")
 			os.Exit(0)
