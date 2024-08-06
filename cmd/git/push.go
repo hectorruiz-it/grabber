@@ -4,9 +4,7 @@ Copyright © 2024 HÉCTOR <EMAIL ADDRESS>
 package git_actions
 
 import (
-	"errors"
 	"os"
-	"regexp"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
@@ -44,7 +42,7 @@ func push() {
 
 	remoteURLs := remotes[0].Config().URLs
 	// fmt.Println(remoteURLs)
-	profile, authMethod, err := getProfileByRepository(remoteURLs[0])
+	profile, authMethod, err := common.GetProfileByRepository(remoteURLs[0])
 	common.CheckAndReturnError(err)
 
 	switch authMethod {
@@ -80,40 +78,4 @@ func push() {
 		common.CheckAndReturnError(err)
 	}
 
-}
-
-func getProfileByRepository(repository string) (string, string, error) {
-	config := common.ReadGrabberConfig()
-	sshRegex := regexp.MustCompile(`^git@`)
-	httpsRegex := regexp.MustCompile(`^https://`)
-
-	var authMethod string
-
-	switch {
-	case httpsRegex.MatchString(repository):
-		authMethod = "token"
-	case sshRegex.MatchString(repository):
-		authMethod = "ssh"
-	default:
-		err := errors.New("grabber: not a valid origin")
-		common.CheckAndReturnError(err)
-	}
-
-	var grabberProfile string
-	for _, profile := range config.Profiles {
-		if profile.Type == authMethod {
-			for _, r := range profile.Repositories {
-				if r == repository {
-					// fmt.Println("repository found")
-					grabberProfile = profile.Profile
-					return grabberProfile, authMethod, nil
-				}
-			}
-		} else {
-			continue
-		}
-	}
-
-	err := errors.New("grabber: repository is outside grabber configuration.")
-	return grabberProfile, authMethod, err
 }

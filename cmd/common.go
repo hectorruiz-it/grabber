@@ -2,8 +2,10 @@ package grabber
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
+	"regexp"
 
 	"gopkg.in/ini.v1"
 )
@@ -154,4 +156,40 @@ func ReadCheckExistsProfiles(profile string, validation bool) (bool, map[string]
 		return true, profileCheck
 	}
 	return false, profileCheck
+}
+
+func GetProfileByRepository(repository string) (string, string, error) {
+	config := ReadGrabberConfig()
+	sshRegex := regexp.MustCompile(`^git@`)
+	httpsRegex := regexp.MustCompile(`^https://`)
+
+	var authMethod string
+
+	switch {
+	case httpsRegex.MatchString(repository):
+		authMethod = "token"
+	case sshRegex.MatchString(repository):
+		authMethod = "ssh"
+	default:
+		err := errors.New("grabber: not a valid origin")
+		CheckAndReturnError(err)
+	}
+
+	var grabberProfile string
+	for _, profile := range config.Profiles {
+		if profile.Type == authMethod {
+			for _, r := range profile.Repositories {
+				if r == repository {
+					// fmt.Println("repository found")
+					grabberProfile = profile.Profile
+					return grabberProfile, authMethod, nil
+				}
+			}
+		} else {
+			continue
+		}
+	}
+
+	err := errors.New("grabber: repository is outside grabber configuration.")
+	return grabberProfile, authMethod, err
 }

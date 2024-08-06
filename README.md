@@ -23,7 +23,7 @@ With `grabber` you can do:
 ### Add profile
 Creates a new Grabber Profile based on the authentication method you provide (ssh or token):
 
-```shell 
+```shell
 grabber add-profile profile_name --[ssh|token]
 ```
 
@@ -67,7 +67,7 @@ grabber push
 #### What this command does:
 - Retrieves the profile that you used to clone this repository on `.grabber-config.json` file.
 - Then based on your authentication method:
-  - **ssh**: Retrieves private key path and retrieves your password from the keyring system. 
+  - **ssh**: Retrieves private key path and retrieves your password from the keyring system.
   - **token**: Retrieves your token from the keyring system.
 - Pushes to the remote origin.
 
@@ -75,7 +75,7 @@ grabber push
 
 Gives you information of your current profiles and their respective repositories.
 
-```shell 
+```shell
 ~/grabber# grabber list profiles
 Profile                 AuthMethod
 ────────────────────────────────────
@@ -88,13 +88,8 @@ github-iot              token
 ```shell
 ~/grabber# grabber list repositories -p github
 Repositories
-────────────────────────────────────        
+────────────────────────────────────
 git@github.com:hectorruiz-it/grabber.git
 git@github.com:hectorruiz-it/letme.git
 git@github.com:lockedinspace/letme.git
 ```
-
-
-
-
-
