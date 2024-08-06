@@ -114,6 +114,7 @@ func addRepositoryToConfig(profile string, repository string) {
 			config.Profiles[i].Repositories = append(config.Profiles[i].Repositories, repository)
 		}
 	}
+
 	data, err := json.Marshal(config)
 	common.CheckAndReturnError(err)
 	err = os.WriteFile(homeDir+common.MAPPINGS_FILE_PATH, data, 0700)

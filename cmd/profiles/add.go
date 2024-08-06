@@ -59,19 +59,19 @@ func createProfile(newProfile string, basic bool, ssh bool, token bool) {
 		appliedProfiles = addConfigUsernameProfile(basicProfiles, newProfile, model)
 		appliedProfiles.SaveTo(homeDir + common.PROFILES_BASIC_FILE_PATH)
 		storeOnKeychain(newProfile, model.inputs[1].Value())
-		addProfileToConfig(newProfile)
+		addProfileToConfig(newProfile, model.profileType)
 	case ssh:
 		sshProfiles := common.ReadSshProfilesFile()
 		appliedProfiles = addConfigSshProfile(sshProfiles, newProfile, model)
 		appliedProfiles.SaveTo(homeDir + common.PROFILES_SSH_FILE_PATH)
 		storeOnKeychain(newProfile, model.inputs[2].Value())
-		addProfileToConfig(newProfile)
+		addProfileToConfig(newProfile, model.profileType)
 	case token:
 		tokenProfiles := common.ReadTokenProfilesFile()
 		appliedProfiles = addConfigUsernameProfile(tokenProfiles, newProfile, model)
 		appliedProfiles.SaveTo(homeDir + common.PROFILES_TOKEN_FILE_PATH)
 		storeOnKeychain(newProfile, model.inputs[1].Value())
-		addProfileToConfig(newProfile)
+		addProfileToConfig(newProfile, model.profileType)
 	}
 
 	fmt.Println("grabber: " + newProfile + " profile configured.")
@@ -126,12 +126,13 @@ func storeOnKeychain(profile string, password string) {
 	common.CheckAndReturnError(err)
 }
 
-func addProfileToConfig(profile string) {
+func addProfileToConfig(profile string, profileType string) {
 	config := common.ReadGrabberConfig()
 	homeDir := common.GetHomeDirectory()
 
 	config.Profiles = append(config.Profiles, common.Profile{
 		Profile:      profile,
+		Type:         profileType,
 		Repositories: []string{},
 	})
 

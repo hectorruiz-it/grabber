@@ -24,6 +24,7 @@ type Profiles struct {
 
 type Profile struct {
 	Profile      string   `json:"profile"`
+	Type         string   `json:"type"`
 	Repositories []string `json:"repositories"`
 }
 

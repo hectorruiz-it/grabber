@@ -7,7 +7,6 @@ require (
 	github.com/charmbracelet/bubbletea v0.26.6
 	github.com/charmbracelet/lipgloss v0.12.1
 	github.com/fatih/color v1.17.0
-	github.com/go-git/go-git v3.2.0+incompatible
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/rodaine/table v1.2.0
 	github.com/spf13/cobra v1.8.1
@@ -60,7 +59,5 @@ require (
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.13.0 // indirect
-	gopkg.in/sourcegraph/go-vcsurl.v1 v1.0.0-20131114132947-6b12603ea6fd // indirect
-	gopkg.in/src-d/go-git.v3 v3.2.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
