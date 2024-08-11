@@ -47,7 +47,8 @@ var listRepositories = &cobra.Command{
 			common.CheckAndReturnError(err)
 		}
 
-		var repositories []string
+		var repositories []common.Repository
+
 		config := common.ReadGrabberConfig()
 		for _, id := range config.Profiles {
 			// fmt.Println(id.Profile)
@@ -60,11 +61,17 @@ var listRepositories = &cobra.Command{
 			err = fmt.Errorf("grabber: no repositories cloned yet with " + profile + " profile.")
 			common.CheckAndReturnError(err)
 		}
-		sort.Strings(repositories)
+
+		var remotes []string
+		for _, remote := range repositories {
+			remotes = append(remotes, remote.Name)
+		}
+
+		sort.Strings(remotes)
 		tbl := table.New("Repositories")
 		headerFmt := color.New(color.Underline).SprintfFunc()
 		tbl.WithHeaderFormatter(headerFmt)
-		for _, id := range repositories {
+		for _, id := range remotes {
 			tbl.AddRow(id)
 		}
 		tbl.Print()

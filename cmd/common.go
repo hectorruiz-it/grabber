@@ -25,9 +25,14 @@ type Profiles struct {
 }
 
 type Profile struct {
-	Profile      string   `json:"profile"`
-	Type         string   `json:"type"`
-	Repositories []string `json:"repositories"`
+	Profile      string       `json:"profile"`
+	Type         string       `json:"type"`
+	Repositories []Repository `json:"repositories"`
+}
+
+type Repository struct {
+	Path string `json:"path"`
+	Name string `json:"name"`
 }
 
 func CheckAndReturnError(err error) {
@@ -179,7 +184,7 @@ func GetProfileByRepository(repository string) (string, string, error) {
 	for _, profile := range config.Profiles {
 		if profile.Type == authMethod {
 			for _, r := range profile.Repositories {
-				if r == repository {
+				if r.Name == repository {
 					// fmt.Println("repository found")
 					grabberProfile = profile.Profile
 					return grabberProfile, authMethod, nil

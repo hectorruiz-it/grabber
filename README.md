@@ -10,6 +10,7 @@ With `grabber` you can do:
 - Get full list of current repositories.
 - Get a list of all configured profiles (Identified Authentication methods).
 - Clone, Pull and Push from/to repositories.
+- Remove repositories from config and from the path if specified **(WIP)**.
 - Install all repositories through a JSON file to easily migrate from devices **(WIP)**.
 - Work with a DynamoDB table to have a shared storage for teams to ease distribution **(WIP)**.
 
@@ -30,6 +31,19 @@ grabber add-profile profile_name --[ssh|token]
 #### What this command does:
 - Creates a new profile (Identified Authentication method).
 - Based on wether you use ssh or token adds an entry to their respective file.
+
+### Track
+Adds existing repositories to grabber without needing it to clone again.
+
+```shell
+grabber track path --profile profile_name
+```
+
+#### What this command does:
+- Gets directories based on path input.
+- Opens directories and checks if it's a repository and if it has remotes.
+- Then adds repository to grabber config file `.grabber-config.json`.
+
 
 ### Clone
 
@@ -93,3 +107,10 @@ git@github.com:hectorruiz-it/grabber.git
 git@github.com:hectorruiz-it/letme.git
 git@github.com:lockedinspace/letme.git
 ```
+
+## TO DO/IMPROVEMENTS
+
+- Add real progress output on track command.
+- Unify addRepositoryToConfig function.
+- Validate profile exists when trying to add a repository to the config.
+- Use path library for configuring paths.

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 
@@ -77,7 +78,7 @@ func clone(repository string, profile string) {
 			Progress: os.Stdout,
 		})
 		common.CheckAndReturnError(err)
-		addRepositoryToConfig(profile, repository)
+		addRepositoryToConfig(profile, repository, directory[0])
 
 	case sshRegex.MatchString(repository):
 		if profileMap[AUTH_METHODS[1]] {
@@ -97,7 +98,7 @@ func clone(repository string, profile string) {
 				URL:      repository,
 			})
 			common.CheckAndReturnError(err)
-			addRepositoryToConfig(profile, repository)
+			addRepositoryToConfig(profile, repository, directory[0])
 		} else {
 			err := errors.New("grabber: profile `" + profile + "` is not an ssh profile.")
 			common.CheckAndReturnError(err)
@@ -105,13 +106,18 @@ func clone(repository string, profile string) {
 	}
 }
 
-func addRepositoryToConfig(profile string, repository string) {
+func addRepositoryToConfig(profile string, repository string, directory string) {
 	config := common.ReadGrabberConfig()
 	homeDir := common.GetHomeDirectory()
+	currentDir, err := os.Getwd()
+	common.CheckAndReturnError(err)
 
 	for i := range config.Profiles {
 		if config.Profiles[i].Profile == profile {
-			config.Profiles[i].Repositories = append(config.Profiles[i].Repositories, repository)
+			config.Profiles[i].Repositories = append(config.Profiles[i].Repositories, common.Repository{
+				Path: path.Join(currentDir, directory),
+				Name: repository,
+			})
 		}
 	}
 

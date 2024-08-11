@@ -133,7 +133,7 @@ func addProfileToConfig(profile string, profileType string) {
 	config.Profiles = append(config.Profiles, common.Profile{
 		Profile:      profile,
 		Type:         profileType,
-		Repositories: []string{},
+		Repositories: []common.Repository{},
 	})
 
 	data, err := json.Marshal(config)
@@ -141,5 +141,4 @@ func addProfileToConfig(profile string, profileType string) {
 
 	err = os.WriteFile(homeDir+common.MAPPINGS_FILE_PATH, data, 0700)
 	common.CheckAndReturnError(err)
-
 }
