@@ -198,3 +198,23 @@ func GetProfileByRepository(repository string) (string, string, error) {
 	err := errors.New("grabber: repository is outside grabber configuration.")
 	return grabberProfile, authMethod, err
 }
+
+func GetProfiles() []string {
+	var profiles []string
+	sshProfiles := ReadSshProfilesFile()
+	tokenProfiles := ReadTokenProfilesFile()
+
+	for _, section := range sshProfiles.Sections() {
+		if section.Name() != "DEFAULT" {
+			profiles = append(profiles, section.Name())
+		}
+	}
+
+	for _, section := range tokenProfiles.Sections() {
+		if section.Name() != "DEFAULT" {
+			profiles = append(profiles, section.Name())
+		}
+	}
+
+	return profiles
+}
