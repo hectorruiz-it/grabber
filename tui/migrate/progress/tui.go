@@ -40,9 +40,9 @@ type Repository struct {
 var (
 	currentPkgNameStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("211"))
 	doneStyle           = lipgloss.NewStyle().Margin(1, 2)
-	checkMark           = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).SetString("✓")
-	omitMark            = lipgloss.NewStyle().Foreground(lipgloss.Color("33")).SetString("—")  // Blue color
-	failedMark          = lipgloss.NewStyle().Foreground(lipgloss.Color("196")).SetString("❌") // Red color
+	checkMark           = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).SetString("✓").Bold(true)
+	omitMark            = lipgloss.NewStyle().Foreground(lipgloss.Color("33")).SetString("—").Bold(true)
+	failedMark          = lipgloss.NewStyle().Foreground(lipgloss.Color("196")).SetString("❌").Bold(true)
 
 	WarningLog *log.Logger
 	InfoLog    *log.Logger
@@ -119,9 +119,9 @@ func (m model) View() string {
 	for _, repo := range m.repositories {
 		switch {
 		case m.doneRepos[repo.Repository]:
-			fmt.Fprintf(&b, "%s %s\n", checkMark, repo.Repository)
+			fmt.Fprintf(&b, "%s  %s\n", checkMark, repo.Repository)
 		case m.ommitedRepos[repo.Repository]:
-			fmt.Fprintf(&b, "%s %s\n", omitMark, repo.Repository)
+			fmt.Fprintf(&b, "%s  %s\n", omitMark, repo.Repository)
 		case m.failedRepos[repo.Repository]:
 			fmt.Fprintf(&b, "%s %s\n", failedMark, repo.Repository)
 		default:
@@ -153,10 +153,12 @@ func downloadAndInstall(repository Repository) tea.Cmd {
 			httpsRegex := regexp.MustCompile(`^https://`)
 			service := "grabber"
 
-			ErrorLog.Println("grabber: obtaining " + repository.Profile + "-profile entry from your keyring service.")
+			InfoLog.Println("grabber: obtaining " + repository.Profile + "-profile entry from your keyring service.")
 
 			password, err := keyring.Get(service, repository.Profile+"-profile")
-			ErrorLog.Println("grabber:", err)
+			if err != nil {
+				ErrorLog.Println("grabber:", err)
+			}
 
 			switch {
 			case httpsRegex.MatchString(repository.Repository):

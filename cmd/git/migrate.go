@@ -15,13 +15,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// type Repository struct {
-// 	Path        string
-// 	Profile     string
-// 	ProfileType string
-// 	Repository  string
-// }
-
 type report struct {
 	Repository string
 	Status     string
@@ -36,20 +29,14 @@ var migrateCmd = &cobra.Command{
 	Example: `  grabber migrate --all
   grabber migrate --profile github`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// fmt.Println("pull called")
-
-		// profile, err := cmd.Flags().GetString("profile")
-		// common.CheckAndReturnError(err)
-		// fmt.Println(profile)
-
 		migrate()
 	},
 }
 
 func init() {
 	common.RootCmd.AddCommand(migrateCmd)
-	migrateCmd.Flags().BoolP("all", "A", false, "migrates repositories from all profiles")
-	migrateCmd.Flags().StringP("profile", "p", "", "profile repositories to migrate")
+	migrateCmd.Flags().BoolP("all", "A", true, "migrates repositories from all profiles")
+	migrateCmd.Flags().StringP("profile", "p", "", "profile repositories to migrate (WIP)")
 	// migrateCmd.MarkFlagsOneRequired("all", "profile")
 	// migrateCmd.MarkFlagsMutuallyExclusive("all", "profile")
 }

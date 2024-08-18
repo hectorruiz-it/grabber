@@ -11,7 +11,7 @@ With `grabber` you can do:
 - Get a list of all configured profiles (Identified Authentication methods).
 - Clone, Pull and Push from/to repositories.
 - Remove repositories from config and from the path if specified **(WIP)**.
-- Install all repositories through a JSON file to easily migrate from devices **(WIP)**.
+- Install all repositories through a JSON file to easily migrate from devices **(Beta)**.
 - Work with a DynamoDB table to have a shared storage for teams to ease distribution **(WIP)**.
 
 ## Files
@@ -107,6 +107,15 @@ git@github.com:hectorruiz-it/grabber.git
 git@github.com:hectorruiz-it/letme.git
 git@github.com:lockedinspace/letme.git
 ```
+
+### Migrate
+
+Allows you to clone repositories from your previous grabber configuration using the same paths allowing a smooth migration between devices.
+
+![](docs/migrate.gif)
+
+
+
 
 ## TO DO/IMPROVEMENTS
 
