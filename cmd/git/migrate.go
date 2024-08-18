@@ -5,20 +5,22 @@
 package git_actions
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
-	"regexp"
 	"time"
 
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	common "github.com/hectorruiz-it/grabber/cmd"
+	migrate_tui "github.com/hectorruiz-it/grabber/tui/migrate/progress"
 	"github.com/spf13/cobra"
-	"github.com/zalando/go-keyring"
 )
+
+// type Repository struct {
+// 	Path        string
+// 	Profile     string
+// 	ProfileType string
+// 	Repository  string
+// }
 
 type report struct {
 	Repository string
@@ -73,9 +75,7 @@ func migrate() {
 
 	config := common.ReadGrabberConfig()
 	currentProfiles := common.GetProfiles()
-	// var configProfiles []string
 
-	// var profiles common.Profiles
 	checkProfiles := make(map[string]bool, len(config.Profiles))
 
 	for _, configProfile := range config.Profiles {
@@ -89,10 +89,12 @@ func migrate() {
 		}
 		if !checkProfiles[configProfile.Profile] {
 			fmt.Println("Profile `" + configProfile.Profile + "` not found. What do you want to do?")
-			fmt.Println("1: Migrate repositories to another profile")
-			fmt.Println("2: Create a new profile")
-			fmt.Println("3: Omit profile")
+			fmt.Println("  1: Migrate repositories to another profile")
+			fmt.Println("  2: Create a new profile")
+			fmt.Println("  3: Omit profile")
 			var option string
+			fmt.Printf("Option: ")
+			fmt.Scanln(&option)
 		loop:
 			for {
 				switch option {
@@ -114,123 +116,22 @@ func migrate() {
 		}
 	}
 
-	// fmt.Println(checkProfiles)
-	var cloneReport report
-	var cloned int
-	var ommited int
-	var failed int
+	var migrationRepositories []migrate_tui.Repository
 
 	for _, configProfile := range config.Profiles {
-		reportChannel := make(chan report, len(configProfile.Repositories))
-
 		if checkProfiles[configProfile.Profile] {
 			for _, repository := range configProfile.Repositories {
-				go migrateClone(repository.Name, repository.Path, configProfile.Profile, configProfile.Type, reportChannel)
+				migrationRepositories = append(migrationRepositories, migrate_tui.Repository{
+					Path:        repository.Path,
+					Profile:     configProfile.Profile,
+					ProfileType: configProfile.Type,
+					Repository:  repository.Name,
+				})
 			}
-
-			for range configProfile.Repositories {
-				cloneReport = <-reportChannel
-				switch cloneReport.Status {
-				case "cloned":
-					cloned += 1
-				case "ommited":
-					ommited += 1
-				case "failed":
-					failed += 1
-				}
-			}
-			// fmt.Println(status)
-			close(reportChannel)
-		} else {
-			fmt.Println("grabber: profile `" + configProfile.Profile + "` ommited. Profile doesn´t exist.")
 		}
 	}
-	fmt.Println("Migration complete!", cloned, "cloned,", ommited, "ommited and", failed, "failed")
 
-	// get config and existing profiles.
-	// Profiles validation procedure:
-	// If exists continue
-	// If not (tui selector):
-	// 1. Map profile to an existing one.
-	// This will require to move all repositories to the existing profile if they are of the same type.
-	// 2. Create a new profile based on config profile type:
-	// Ask for name rebranding if wanted (prompt modification)?
-	// Add the profile to the auth method file but not add it to json.
-	// Modify Profile name if it has been a rebranding.
-	// 3. Omit profile.
-	// Start cloning repositories in parallel.
-	// Is there a way to limit parallelism? -> Yes, limiting channel size
-	// Handle err repository already exists with continue, not error.
-	// Show a report of cloned and ommited repositories.
-	// Use bubbletea packamanager tui.
-}
-
-func migrateClone(repository string, path string, profile string, profileType string, reportChannel chan report) {
-	sshRegex := regexp.MustCompile(`^git@`)
-	httpsRegex := regexp.MustCompile(`^https://`)
-	service := "grabber"
-
-	fmt.Println("Cloning:", repository)
-	switch {
-	case httpsRegex.MatchString(repository):
-		password, err := keyring.Get(service, profile+"-profile")
-		common.CheckAndReturnError(err)
-
-		_, err = git.PlainClone(path, false, &git.CloneOptions{
-			Auth: &http.BasicAuth{
-				Username: "git",
-				Password: password,
-			},
-			URL: repository,
-			// Progress: os.Stdout,
-		})
-
-		switch err {
-		case nil:
-			InfoLog.Println("grabber: succesfully cloned repository `" + repository + "`.")
-			reportChannel <- report{Repository: repository, Status: "cloned"}
-		case git.ErrRepositoryAlreadyExists:
-			WarningLog.Println("grabber: repository `" + repository + "` already exists.")
-			reportChannel <- report{Repository: repository, Status: "ommited"}
-		default:
-			ErrorLog.Println("grabber:", err)
-			reportChannel <- report{Repository: repository, Status: "failed"}
-		}
-
-	case sshRegex.MatchString(repository):
-		if profileType == AUTH_METHODS[1] {
-			sshProfiles := common.ReadSshProfilesFile()
-			privateKey, err := sshProfiles.Section(profile).GetKey("private_key")
-			common.CheckAndReturnError(err)
-
-			password, err := keyring.Get(service, profile+"-profile")
-			common.CheckAndReturnError(err)
-
-			publicKeys, err := ssh.NewPublicKeysFromFile("git", privateKey.Value(), password)
-			common.CheckAndReturnError(err)
-
-			_, err = git.PlainClone(path, false, &git.CloneOptions{
-				Auth: publicKeys,
-				// Progress: os.Stdout,
-				URL: repository,
-			})
-
-			switch err {
-			case nil:
-				InfoLog.Println("grabber: succesfully cloned repository `" + repository + "`.")
-				reportChannel <- report{Repository: repository, Status: "cloned"}
-			case git.ErrRepositoryAlreadyExists:
-				WarningLog.Println("grabber: repository `" + repository + "` already exists.")
-				reportChannel <- report{Repository: repository, Status: "ommited"}
-			default:
-				ErrorLog.Println("grabber:", err)
-				reportChannel <- report{Repository: repository, Status: "failed"}
-			}
-		} else {
-			err := errors.New("grabber: profile `" + profile + "` is not an ssh profile.")
-			common.CheckAndReturnError(err)
-		}
-	}
+	migrate_tui.ProgressTui(migrationRepositories)
 }
 
 func migrateRepositoriesToAnotherProfile()          {}
